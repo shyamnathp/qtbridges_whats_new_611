@@ -20,23 +20,6 @@
   <!-- Theme used for syntax highlighted code -->
   <link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css">
 
-  <!-- Mermaid.js for diagrams -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'dark',
-      themeVariables: {
-        primaryColor: '#41CD52',
-        primaryTextColor: '#fff',
-        primaryBorderColor: '#41CD52',
-        lineColor: '#1E90FF',
-        secondaryColor: '#1E90FF',
-        tertiaryColor: '#FFD43B'
-      }
-    });
-  </script>
-
   <!-- Printing and PDF exports -->
   <script>
     if( window.location.search.match( /print-pdf/gi ) ) {
@@ -104,7 +87,7 @@
       <!--======================= SIGNAL — CODE =======================-->
       <section data-transition="slide">
         <h2><code>QtBridge.Signal</code> — Example</h2>
-        <pre><code class="python" data-trim data-noescape>
+        <pre><code class="python" data-trim data-noescape data-line-numbers>
 from QtBridge import bridge_instance, qtbridge, Signal
 
 class Counter:
@@ -151,7 +134,7 @@ class Counter:
         <div style="display: flex; gap: 20px; justify-content: flex-start; margin-left: -25%;">
           <div style="flex: 1;">
             <h4 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 5px;">Before</h4>
-            <pre style="font-size: 0.75em;"><code class="python" data-trim data-noescape>
+            <pre style="font-size: 0.75em;"><code class="python" data-trim data-noescape data-line-numbers>
 class CounterApp:
     def __init__(self):
         self._counter = 0
@@ -180,7 +163,7 @@ class CounterApp:
           </div>
           <div style="flex: 1;">
             <h4 style="color: var(--qt-green); border-bottom: 2px solid var(--qt-green); padding-bottom: 5px;">After (Auto Properties)</h4>
-            <pre style="font-size: 0.75em;"><code class="python" data-trim data-noescape>
+            <pre style="font-size: 0.75em;"><code class="python" data-trim data-noescape data-line-numbers>
 class CounterApp:
     def __init__(self):
         self.counter = 0
@@ -290,6 +273,20 @@ class UserDataModel:
         </aside>
       </section>
 
+      <!--======================= CHALLENGES — QUOTE SLIDE =======================-->
+      <section data-transition="slide">
+        <div style="display:flex; align-items:center; justify-content:center; height:100%;">
+          <blockquote style="max-width: 900px; text-align:left; font-size:0.92em; color:#ddd; border-left:none; padding:0 28px;">
+            <p style="font-size:1.0em; font-weight:600; margin-bottom:0.6em; text-align:left;">Challenges</p>
+            <p style="margin:0.6em 0; text-align:left;">The lack of a simple tool like Qt Designer (for Widgets) for QML is currently a challenge for PySide, and will remain for the Python bridge. <strong>Additionally, requesting new people to learn QML as a requirement, put us behind other tools that can create a UI only with Python.</strong></p>
+            <p style="margin:0.6em 0; text-align:left;">...</p>
+          </blockquote>
+        </div>
+        <div style="text-align:center; margin-top:12px;">
+          <a href="https://qtgroup.atlassian.net/wiki/spaces/QTPO/pages/228459038/Qt+Bridge+Python#Value-Proposition" style="color:#1E90FF; font-size:0.9em;">Value Proposition (Confluence)</a>
+        </div>
+      </section>
+
       <!--======================= QML COMPONENT — INTRO =======================-->
       <section data-transition="slide">
         <h2><code>load_qml_component</code></h2>
@@ -302,39 +299,10 @@ class UserDataModel:
         </ul>
       </section>
 
-      <!--======================= QML COMPONENT — CODE =======================-->
-      <section data-transition="slide">
-        <h2><code>load_qml_component</code> — Example</h2>
-        <pre><code class="python" data-trim data-noescape>
-from QtBridge import load_qml_component, qtbridge
-
-# Load a QtQuick Controls type
-Label = load_qml_component(module="QtQuick.Controls", type_name="Label")
-
-@qtbridge(qml_file="Main.qml")
-def main(window):
-    content = window.property("contentItem")
-
-    # Create a Label entirely from Python
-    heading = Label.create(text="Hello from Python!")
-    heading.qobject.setProperty("parent", content)
-    heading.qobject.setProperty("x", 20)
-    heading.qobject.setProperty("y", 20)
-
-    # Properties are readable and writable
-    heading.text = "Updated from Python!"
-
-    return [heading]
-        </code></pre>
-        <aside class="notes">
-          Live demo: examples/controls_from_python
-        </aside>
-      </section>
-
       <!--======================= QML COMPONENT — COMPOSITION =======================-->
       <section data-transition="slide">
         <h2>Composition with Custom QML Types</h2>
-        <pre><code class="python" data-trim data-noescape>
+        <pre><code class="python" data-trim data-noescape data-line-numbers>
 from QtBridge import qtbridge, bridge_instance, load_qml_component
 
 # Load a user-defined QML type
@@ -357,6 +325,35 @@ class Employee:
         </p>
         <aside class="notes">
           Live demo: examples/qml_composition
+        </aside>
+      </section>
+
+      <!--======================= QML COMPONENT — CODE =======================-->
+      <section data-transition="slide">
+        <h2><code>load_qml_component</code> — Example</h2>
+        <pre><code class="python" data-trim data-noescape data-line-numbers>
+from QtBridge import load_qml_component, qtbridge
+
+# Load a QtQuick Controls type
+Label = load_qml_component(module="QtQuick.Controls", type_name="Label")
+
+@qtbridge(qml_file="Main.qml")
+def main(window):
+    content = window.property("contentItem")
+
+    # Create a Label entirely from Python
+    heading = Label.create(text="Hello from Python!")
+    heading.qobject.setProperty("parent", content)
+    heading.qobject.setProperty("x", 20)
+    heading.qobject.setProperty("y", 20)
+
+    # Properties are readable and writable
+    heading.text = "Updated from Python!"
+
+    return [heading]
+        </code></pre>
+        <aside class="notes">
+          Live demo: examples/controls_from_python
         </aside>
       </section>
 
@@ -410,6 +407,8 @@ class Employee:
       slideNumber: 'c/t',
       plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
     });
+
+
   </script>
 
   <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>

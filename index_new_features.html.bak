@@ -1,0 +1,351 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, height=1080, maximum-scale=1.0, user-scalable=no">
+
+  <title>QtBridge for Python — What's New</title>
+
+  <link rel="stylesheet" href="reveal.js/dist/reset.css">
+  <link rel="stylesheet" href="reveal.js/dist/reveal.css">
+  <link rel="stylesheet" href="reveal.js/dist/theme/night.css" id="theme">
+  <link rel="stylesheet" href="css/qt-night.css">
+  <link rel="stylesheet" href="css/extras.css">
+
+  <!-- Google Fonts: Titillium Web -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Theme used for syntax highlighted code -->
+  <link rel="stylesheet" href="reveal.js/plugin/highlight/monokai.css">
+
+  <!-- Printing and PDF exports -->
+  <script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = 'reveal.js/css/print/pdf.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+  </script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!--======================= SLIDE 1 — TITLE =======================-->
+      <section data-transition="slide-in fade-out">
+        <div style="
+          display: flex;
+          flex-direction: column;
+          align-items: left;
+          justify-content: center;
+          position: relative;">
+          <img src="img/python.svg" style="
+            position: absolute;
+            left: 82%;
+            top: 44%;
+            transform: translate(-50%, -50%);
+            width: 184px;" />
+          <h3 style="position: relative; z-index: 1; text-align: left;">
+            <span style="color:#FFD43B;">QtBridge</span> for
+            <span style="color:#1E90FF;">Python</span><br/>
+            <span style="font-size: 0.7em; color: #ccc;">What's New</span>
+          </h3>
+          <hr class="qt-line" style="border: 2px solid #41CD52; width: 50%; margin: 10px 0; position: relative; z-index: 1;" />
+          <p class="x80" style="position: relative; z-index: 1; text-align: left;">
+            <i class="qt-green">Shyamnath</i> Premnadh<br/>
+          </p>
+        </div>
+      </section>
+
+      <!--======================= SLIDE 2 — BEFORE vs AFTER TABLE =======================-->
+      <section data-transition="slide">
+        <h2>Then &amp; Now</h2>
+        <table style="font-size: 0.68em; margin-top: 10px;">
+          <thead>
+            <tr>
+              <th style="width: 30%">Area</th>
+              <th style="width: 35%; color: #ff6b6b;">Before</th>
+              <th style="width: 35%;">After</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="fragment">
+              <td><strong>Signals</strong></td>
+              <td>Auto-generated only; emit only when set from QML</td>
+              <td><code>Signal(int)</code> — custom Python signals, real Qt signals, emit from Python</td>
+            </tr>
+            <tr class="fragment">
+              <td><strong>Properties</strong></td>
+              <td>Manual <code>@property</code> + getter/setter boilerplate</td>
+              <td><strong>Auto Properties</strong> — <code>self.x = ...</code> in <code>__init__</code> is enough</td>
+            </tr>
+            <tr class="fragment">
+              <td><strong>Data models</strong></td>
+              <td><code>list</code>, <code>tuple</code>, <code>numpy</code>, built-in types</td>
+              <td>+ <code>@dataclass</code>, <code>list[dict]</code>/JSON, <strong>Polars DataFrame</strong></td>
+            </tr>
+            <tr class="fragment">
+              <td><strong>Property observers</strong></td>
+              <td>—</td>
+              <td><code>@watch</code> (old/new values) &amp; <code>@effect</code> (side-effects)</td>
+            </tr>
+            <tr class="fragment">
+              <td><strong>Component lifecycle</strong></td>
+              <td>— (was WIP)</td>
+              <td><code>@complete</code> — runs after QML sets all properties</td>
+            </tr>
+            <tr class="fragment">
+              <td><strong>QML from Python</strong></td>
+              <td>—</td>
+              <td><code>load_qml_component</code> — create &amp; compose QML objects in Python</td>
+            </tr>
+          </tbody>
+        </table>
+        <aside class="notes">
+          Walk through the table row by row:
+          - Signals: previously only auto-generated on property change from QML; now you can declare and emit custom signals from Python.
+          - Properties: used to need full @property boilerplate; now auto-generated from __init__ assignments.
+          - Data models: added 3 tabular data approaches: dataclass, dict/JSON, and Polars (with DuckDB, PostgreSQL, etc.).
+          - Property observers: @watch gives old/new values, @effect fires on any of listed properties.
+          - @complete: maps to QQmlParserStatus::componentComplete(), runs after QML sets all properties.
+          - load_qml_component: load any QML type (custom or built-in) and create/compose instances from Python.
+        </aside>
+      </section>
+
+      <!--======================= SLIDE 3a — HIGHLIGHTS (1/3) =======================-->
+      <section data-transition="slide">
+        <h2>Highlights <span style="font-size: 0.6em; color: #888;">(1/3)</span></h2>
+        <div style="display: flex; gap: 24px; font-size: 0.62em;">
+
+          <!-- Left: Signal + Auto Properties -->
+          <div style="flex: 1;">
+            <h4 style="border: none; margin-bottom: 4px; color: #FFD43B;">Signal + Auto Properties</h4>
+            <pre class="fragment" style="margin-top: 0;"><code class="python" data-trim data-noescape>
+from QtBridge import Signal
+
+class Counter:
+    countChanged = Signal(int)  # custom signal
+
+    def __init__(self):
+        self.count = 0  # ← auto-property!
+
+    def increment(self):
+        self.count += 1
+        self.countChanged.emit(self.count)
+            </code></pre>
+          </div>
+
+          <!-- Right: Table Data -->
+          <div style="flex: 1;">
+            <h4 style="border: none; margin-bottom: 4px; color: #FFD43B;">Table Data (3 ways)</h4>
+            <pre class="fragment" style="margin-top: 0;"><code class="python" data-trim data-noescape>
+# 1. Dataclass
+def data(self) -> list[UserDC]:
+    return self._users
+
+# 2. Dict / JSON
+def data(self) -> list[dict]:
+    return json.load(open("data.json"))
+
+# 3. Polars DataFrame
+def data(self) -> pl.DataFrame:
+    return self._df
+            </code></pre>
+          </div>
+        </div>
+        <aside class="notes">
+          Slide 1 of 3:
+          - Signal: class-level descriptor, emit from Python, connect in QML or Python.
+          - Auto Properties: self.count = 0 → full Qt property + countChanged signal.
+          - Table data: just change the return type hint on data(). Bridge handles the rest.
+        </aside>
+      </section>
+
+      <!--======================= SLIDE 3b — HIGHLIGHTS (2/3) =======================-->
+      <section data-transition="slide">
+        <h2>Highlights <span style="font-size: 0.6em; color: #888;">(2/3)</span></h2>
+        <div style="display: flex; gap: 24px; font-size: 0.62em;">
+
+          <!-- Left: @watch & @effect -->
+          <div style="flex: 1;">
+            <h4 style="border: none; margin-bottom: 4px; color: #FFD43B;">@watch &amp; @effect</h4>
+            <pre class="fragment" style="margin-top: 0;"><code class="python" data-trim data-noescape>
+from QtBridge import watch, effect, Change
+
+class CounterModel:
+    def __init__(self):
+        self.count = 0
+
+    @watch("count")
+    def _on_change(self, change: Change):
+        print(f"{change.old} → {change.new}")
+
+    @effect("count")
+    def _milestone(self):
+        if self.count == 10:
+            print("Perfect ten! 🎯")
+            </code></pre>
+          </div>
+
+          <!-- Right: @complete -->
+          <div style="flex: 1;">
+            <h4 style="border: none; margin-bottom: 4px; color: #FFD43B;">@complete</h4>
+            <pre class="fragment" style="margin-top: 0;"><code class="python" data-trim data-noescape>
+from QtBridge import complete
+
+class RestService:
+    def __init__(self):
+        self.url = ""
+
+    @complete
+    def on_ready(self):
+        # Runs after QML sets all properties
+        print(f"Ready: {self.url}")
+            </code></pre>
+          </div>
+        </div>
+        <aside class="notes">
+          Slide 2 of 3:
+          - @watch: gets Change(name, old, new, owner) with old/new values.
+          - @effect: no args, side-effect style, fires on any of listed properties.
+          - @complete: runs after Component.onCompleted equivalent, after QML sets all properties.
+        </aside>
+      </section>
+
+      <!--======================= SLIDE 3c — HIGHLIGHTS (3/3) =======================-->
+      <section data-transition="slide">
+        <h2>Highlights <span style="font-size: 0.6em; color: #888;">(3/3)</span></h2>
+        <div style="font-size: 0.68em; max-width: 800px; margin: 0 auto;">
+          <h4 style="border: none; margin-bottom: 8px; color: #FFD43B; text-align: center;">load_qml_component()</h4>
+          <p style="text-align: center; margin-bottom: 16px; font-size: 0.9em; color: #ccc;">
+            Create &amp; compose QML objects entirely from Python
+          </p>
+          <pre class="fragment" style="margin-top: 0;"><code class="python" data-trim data-noescape>
+from QtBridge import load_qml_component
+
+# Load a QtQuick Controls type
+Label = load_qml_component(
+    module="QtQuick.Controls",
+    type_name="Label"
+)
+
+# Create and configure the Label
+heading = Label.create()
+heading.text = "Hello from Python!"
+heading.x = 20
+heading.y = 50
+          </code></pre>
+        </div>
+        <aside class="notes">
+          Slide 3 of 3:
+          - load_qml_component: load any QML type (custom or built-in) and create instances from Python.
+          - Full access to properties, methods, and signals.
+          - Enables full composition and control of QML UI from Python.
+        </aside>
+      </section>
+
+      <!--======================= SLIDE 4 — DEMOS + CLOSING =======================-->
+      <section data-transition="slide">
+        <h2>Live Demos</h2>
+        <div style="font-size: 0.85em; margin-top: 20px;">
+          <div class="fragment" style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+            <div style="min-width: 36px; height: 36px; border-radius: 50%; background: #41CD52; color: #fff;
+                        display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div>
+            <div style="flex: 1; text-align: left;">
+              <strong>Counter</strong>
+              <span style="color: #aaa;">&mdash; auto properties, <code>@watch</code>, <code>@effect</code>, <code>bridge_type</code></span>
+              <br/><code style="font-size: 0.8em; color: #888;">examples/counter</code>
+            </div>
+          </div>
+          <div class="fragment" style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+            <div style="min-width: 36px; height: 36px; border-radius: 50%; background: #1E90FF; color: #fff;
+                        display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+            <div style="flex: 1; text-align: left;">
+              <strong>Iris Dataset</strong>
+              <span style="color: #aaa;">&mdash; Polars DataFrame + DuckDB → QML TableView</span>
+              <br/><code style="font-size: 0.8em; color: #888;">examples/iris</code>
+            </div>
+          </div>
+          <div class="fragment" style="display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+            <div style="min-width: 36px; height: 36px; border-radius: 50%; background: #FFD43B; color: #333;
+                        display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div>
+            <div style="flex: 1; text-align: left;">
+              <strong>Controls from Python</strong>
+              <span style="color: #aaa;">&mdash; create QtQuick Controls from Python via <code>load_qml_component</code></span>
+              <br/><code style="font-size: 0.8em; color: #888;">examples/controls_from_python</code>
+            </div>
+          </div>
+        </div>
+        <div class="fragment" style="margin-top: 36px; text-align: center;">
+          <hr style="border: 1px solid #41CD52; width: 40%; margin: 0 auto 16px;">
+          <p style="font-size: 0.9em;"><i class="qt-green">Questions?</i></p>
+        </div>
+        <aside class="notes">
+          Demo plan (~3 min total):
+          1. Counter: run, click buttons, show terminal output from @watch and @effect. Point out auto-property (self.count = 0) and bridge_type registration. ~1 min.
+          2. Iris: run, show DataFrame populating a TableView. Mention DuckDB + Polars for SQL queries. ~1 min.
+          3. Controls from Python: create a Label or simple control from Python using <code>load_qml_component</code>. ~30s.
+          Then open for questions.
+        </aside>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="reveal.js/dist/reveal.js"></script>
+  <script src="reveal.js/plugin/notes/notes.js"></script>
+  <script src="reveal.js/plugin/markdown/markdown.js"></script>
+  <script src="reveal.js/plugin/highlight/highlight.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      transitionSpeed: 'fast',
+      width: 960,
+      height: 700,
+      margin: 0.1,
+      minScale: 0.5,
+      maxScale: 2.0,
+      slideNumber: 'c/t',
+      plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+  </script>
+
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+  <!-- Hidden footer -->
+  <div id="hidden" style="display:none;">
+    <div id="header">
+      <div id="header-right"></div>
+      <div id="footer-left">
+        <img src="img/qt_logo.webp" style="width: 32px" />
+        <p style="font-size: 14pt; padding-left: 5px;">
+          <i class="white">QtBridge for Python | March 2026</i>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var header = $('#header').html();
+    if ( window.location.search.match( /print-pdf/gi ) ) {
+      Reveal.addEventListener( 'ready', function( event ) {
+        $('.slide-background').append(header);
+      });
+    }
+    else {
+      $('div.reveal').append(header);
+    }
+
+    // speaker notes line break
+    let notes = document.querySelectorAll('aside.notes');
+    notes.forEach(n => {
+      let html = n.innerHTML;
+      html = html.trim().replace(/\n/g, '<br/>');
+      n.innerHTML = html;
+    });
+  </script>
+</body>
+</html>
